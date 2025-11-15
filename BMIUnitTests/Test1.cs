@@ -29,4 +29,25 @@ public sealed class Test1
 
             Assert.AreEqual(expectedCategory, category);
         }
+        [TestMethod]
+        public void TestMethod2()
+        {
+            // Arrange
+            // 10 stone, 0 pounds, 5 ft 5 in
+            var model = new BMI
+            {
+                WeightStones = 10,
+                WeightPounds = 0,
+                HeightFeet = 5,
+                HeightInches = 5
+            };
+
+            // Act
+            double bmi = model.BMIValue;
+
+            // Assert
+            // Expected ≈ 23.30 (calculated with same formula)
+            Assert.AreEqual(23.30, bmi, 0.05,
+                "BMI calculation is not within the expected tolerance.");
+        }
 }

@@ -18,10 +18,11 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+    - name: Test with coverage
+      run: dotnet test --collect:"XPlat Code Coverage"
+
     - name: Publish
-      run: dotnet publish -c Release -o ./publish
+      run: dotnet publish ./bmi2021/bmi2025.csproj -c Release -o ./publish
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
