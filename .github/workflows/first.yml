@@ -18,3 +18,12 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'bmi-krish'
+        publish-profile: ${{ secrets.AZURE_WEBAPP }}
+        package: ./publish
