@@ -5,83 +5,71 @@ on:
     branches: [ "main" ]
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Cache SonarCloud packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.sonar/cache
-        key: ${{ runner.os }}-sonar
-        restore-keys: ${{ runner.os }}-sonar
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
 
-    - name: Install SonarScanner for .NET
-      run: dotnet tool install --global dotnet-sonarscanner
+      - name: Install SonarScanner for .NET
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-    - name: Add dotnet tools to PATH
-      run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      # ---- SONAR BEGIN ----
+      - name: SonarCloud - Begin analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"krishna-puppala13_bmi-krishna" \
+            /o:"krishna-puppala13" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.login="$SONAR_TOKEN" \
+            /d:sonar.cs.opencover.reportsPaths="TestResults/coverage/coverage.cobertura.xml"
+      # ---- SONAR BEGIN ----
 
-    # ---- SONAR BEGIN ----
-    - name: SonarCloud - Begin analysis
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-        dotnet sonarscanner begin \
-          /k:"krishna-puppala13_bmi-krishna" \
-          /o:"krishna-puppala13" \
-          /d:sonar.host.url="https://sonarcloud.io" \
-          /d:sonar.login="$SONAR_TOKEN"
-    # ---- SONAR BEGIN ----
+      # dotnet test will do restore + build + test
+      - name: Test with coverage
+        run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/coverage/coverage /p:CoverletOutputFormat=cobertura
 
-    - name: Restore dependencies
-      run: dotnet restore
+      # ---- SONAR END ----
+      - name: SonarCloud - End analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
+      # ---- SONAR END ----
 
-    - name: Build
-      run: dotnet build --no-restore
+      - name: Publish app
+        run: dotnet publish ./bmi2021/bmi2025.csproj -c Release -o ./publish
 
-    - name: Test with coverage
-      run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/coverage/coverage /p:CoverletOutputFormat=cobertura
-
-    # ---- SONAR END ----
-    - name: SonarCloud - End analysis
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
-    # ---- SONAR END ----
-
-    - name: Publish app
-      run: dotnet publish ./bmi2021/bmi2025.csproj -c Release -o ./publish
-
-    - name: Upload published app as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: bmi-app
-        path: ./publish
-
-
-
+      - name: Upload published app as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bmi-app
+          path: ./publish
 
   deploy:
-    needs: build    
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download published app artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: bmi-app
-        path: ./publish
+      - name: Download published app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bmi-app
+          path: ./publish
 
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'bmi-krish'
-        publish-profile: ${{ secrets.AZURE_WEBAPP }}
-        package: ./publish
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'bmi-krish'
+          publish-profile: ${{ secrets.AZURE_WEBAPP }}
+          package: ./publish
