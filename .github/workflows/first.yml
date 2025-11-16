@@ -72,7 +72,7 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Publish app
-        run: dotnet publish ./PATH/TO/YOURWEBPROJECT.csproj -c Release -o ./publish
+        run: dotnet publish ./bmi2021/bmi2025.csproj -c Release -o ./publish
         # TODO: replace PATH/TO/YOURWEBPROJECT.csproj with your real web project path
         # e.g.: ./BMICalculator/BMICalculator.csproj
 
