@@ -35,7 +35,7 @@ jobs:
             /o:"krishna-puppala13" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.login="$SONAR_TOKEN" \
-            /d:sonar.cs.opencover.reportsPaths="TestResults/coverage/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
       # ---- SONAR BEGIN ----
 
       - name: Restore dependencies
@@ -47,39 +47,9 @@ jobs:
       - name: Test with coverage
         run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=TestResults/coverage/coverage /p:CoverletOutputFormat=opencover
 
-
       # ---- SONAR END ----
       - name: SonarCloud - End analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
       # ---- SONAR END ----
-
-
-  # =========================
-  # CD JOB: DEPLOY
-  # =========================
-  deploy:
-    needs: build        # only runs if build job succeeds
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-
-      - name: Publish app
-        run: dotnet publish ./bmi2021/bmi2025.csproj -c Release -o ./publish
-        # TODO: replace PATH/TO/YOURWEBPROJECT.csproj with your real web project path
-        # e.g.: ./BMICalculator/BMICalculator.csproj
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: 'bmi-krish'
-          publish-profile: ${{ secrets.AZURE_WEBAPP }}
-          package: ./publish
