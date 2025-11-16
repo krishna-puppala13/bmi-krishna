@@ -5,7 +5,9 @@ on:
     branches: [ "main" ]
 
 jobs:
-
+  # =========================
+  # CI JOB: BUILD + TEST + SONAR
+  # =========================
   build:
     runs-on: ubuntu-latest
 
@@ -36,9 +38,14 @@ jobs:
             /d:sonar.cs.opencover.reportsPaths="TestResults/coverage/coverage.cobertura.xml"
       # ---- SONAR BEGIN ----
 
-      # dotnet test will do restore + build + test
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
       - name: Test with coverage
-        run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/coverage/coverage /p:CoverletOutputFormat=cobertura
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=TestResults/coverage/coverage /p:CoverletOutputFormat=cobertura
 
       # ---- SONAR END ----
       - name: SonarCloud - End analysis
@@ -47,25 +54,27 @@ jobs:
         run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
       # ---- SONAR END ----
 
-      - name: Publish app
-        run: dotnet publish ./bmi2021/bmi2025.csproj -c Release -o ./publish
 
-      - name: Upload published app as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bmi-app
-          path: ./publish
-
+  # =========================
+  # CD JOB: DEPLOY
+  # =========================
   deploy:
-    needs: build
+    needs: build        # only runs if build job succeeds
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download published app artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          name: bmi-app
-          path: ./publish
+          dotnet-version: 9.0.x
+
+      - name: Publish app
+        run: dotnet publish ./PATH/TO/YOURWEBPROJECT.csproj -c Release -o ./publish
+        # TODO: replace PATH/TO/YOURWEBPROJECT.csproj with your real web project path
+        # e.g.: ./BMICalculator/BMICalculator.csproj
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
