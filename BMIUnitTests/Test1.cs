@@ -16,7 +16,6 @@ public sealed class Test1
         [DataRow(15, 0, 5, 5, BMICategory.Obese)]
         public void TestMethod1(int weightStones,int weightPounds,int heightFeet,int heightInches,BMICategory expectedCategory)
         {
-            // Arrange
             var model = new BMI
             {
                 WeightStones = weightStones,
@@ -32,7 +31,6 @@ public sealed class Test1
         [TestMethod]
         public void TestMethod2()
         {
-            // Arrange
             // 10 stone, 0 pounds, 5 ft 5 in
             var model = new BMI
             {
@@ -42,11 +40,9 @@ public sealed class Test1
                 HeightInches = 5
             };
 
-            // Act
             double bmi = model.BMIValue;
 
-            // Assert
-            // Expected ≈ 23.30 (calculated with same formula)
+            // Expected ≈ 23.30 
             Assert.AreEqual(23.30, bmi, 0.05,
                 "BMI calculation is not within the expected tolerance.");
         }

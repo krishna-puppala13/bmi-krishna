@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using BMICalculator;   // This is the namespace from your BMI.cs file
+using BMICalculator;   
 
-namespace BMIUnitTests.Tests   // change if your test project uses a different namespace
+namespace BMIUnitTests
 {
     [TestClass]
     [TestCategory("BDD")]
